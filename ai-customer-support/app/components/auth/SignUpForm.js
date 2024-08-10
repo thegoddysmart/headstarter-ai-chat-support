@@ -1,13 +1,23 @@
 'use client';
-
 import { useState } from 'react';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider, facebookProvider } from '../../firebase';
+import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider, facebookProvider } from '../../../firebase';
 import { useRouter } from 'next/navigation';
 import { Box, Button, TextField, Typography, Grid, Paper, Link } from '@mui/material';
-import { styled } from '@mui/system';
-import FacebookIcon from '@mui/icons-material/Facebook';
+import { styled, keyframes } from '@mui/system'; 
 import HeadsetMicIcon from '@mui/icons-material/HeadsetMic';
+import FacebookIcon from '@mui/icons-material/Facebook';
+
+const slideIn = keyframes`
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+`;
 
 const Overlay = styled('div')`
   position: absolute;
@@ -15,8 +25,8 @@ const Overlay = styled('div')`
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(3px);
+  background-color: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(1px);
   z-index: 1;
 `;
 
@@ -25,8 +35,9 @@ const OverlayTextTop = styled('div')`
   top: 10%;
   left: 50%;
   transform: translateX(-50%);
-  color: #ffffff;
+  color: #fff;
   text-align: center;
+  animation: ${slideIn} 1s ease-out;
   z-index: 2;
 `;
 
@@ -35,44 +46,50 @@ const OverlayTextBottom = styled('div')`
   bottom: 10%;
   left: 50%;
   transform: translateX(-50%);
-  color: #ffffff;
+  color: #fff;
   text-align: center;
+  animation: ${slideIn} 1s ease-out;
   z-index: 2;
   font-size: 1.2rem;
   font-weight: bold;
 `;
 
-const SignIn = () => {
+const StyledButton = styled(Button)`
+  background-color: black;
+  color: white;
+
+  &:hover {
+    background-color: #333;
+  }
+`;
+
+const SignUpForm = ({onSwitch}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleEmailSignIn = async (e) => {
+  const handleEmailSignUp = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/home');
+      await createUserWithEmailAndPassword(auth, email, password);
+      router.push('/signin');
     } catch (err) {
-      setError('Invalid email or password');
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Email already registered');
+      } else {
+        setError('Failed to sign up. Please try again.');
+      }
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleSocialSignUp = async (provider) => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth, provider);
       router.push('/home');
     } catch (err) {
-      setError('Failed to sign in with Google. Please try again.');
-    }
-  };
-
-  const handleFacebookSignIn = async () => {
-    try {
-      await signInWithPopup(auth, facebookProvider);
-      router.push('/home');
-    } catch (err) {
-      setError('Failed to sign in with Facebook. Please try again.');
+      setError('Failed to sign up with social provider. Please try again.');
     }
   };
 
@@ -85,7 +102,7 @@ const SignIn = () => {
         md={7}
         sx={{
           position: 'relative',
-          backgroundImage: 'url(/images/signin.webp)',
+          backgroundImage: 'url(/images/chatbot-image.jpg)',
           backgroundRepeat: 'no-repeat',
           backgroundColor: (t) =>
             t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
@@ -96,12 +113,12 @@ const SignIn = () => {
         <Overlay />
         <OverlayTextTop>
           <Typography variant="h2">
-            <HeadsetMicIcon fontSize="large" /> Welcome Back to AI Customer Support
+            <HeadsetMicIcon fontSize="large" /> Welcome to AI Customer Support
           </Typography>
         </OverlayTextTop>
         <OverlayTextBottom>
-          <Typography variant="h4">Streamline your support process with AI solutions.</Typography>
-          <Typography variant="h6">Enhance customer satisfaction with intelligent automation.</Typography>
+          <Typography variant="h4">Effortlessly manage your customer interactions.</Typography>
+          <Typography variant="h6">Enhance your support with AI-driven solutions.</Typography>
         </OverlayTextBottom>
       </Grid>
 
@@ -113,13 +130,12 @@ const SignIn = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            color: '#ffffff', 
           }}
         >
           <Typography component="h1" variant="h5">
-            Sign In
+            Sign Up
           </Typography>
-          <Box component="form" noValidate onSubmit={handleEmailSignIn} sx={{ mt: 1 }}>
+          <Box component="form" noValidate onSubmit={handleEmailSignUp} sx={{ mt: 1 }}>
             <TextField
               margin="normal"
               required
@@ -145,36 +161,36 @@ const SignIn = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
             {error && <Typography color="error">{error}</Typography>}
-            <Button
+            <StyledButton
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2, backgroundColor: '#000000', color: '#ffffff' }}
+              sx={{ mt: 3, mb: 2 }}
             >
-              Sign In with Email
-            </Button>
-            <Button
+              Sign Up with Email
+            </StyledButton>
+            <StyledButton
               fullWidth
               variant="contained"
-              sx={{ mt: 1, mb: 1, backgroundColor: '#000000', color: '#ffffff' }}
-              startIcon={<img src="/images/google.png" alt="Google" style={{ width: '24px' }} />}
-              onClick={handleGoogleSignIn}
+              sx={{ mt: 1, mb: 1 }}
+              startIcon={<img src="/images/google.png" alt="Google" style={{ width: 24, height: 24 }} />} // Google icon with color
+              onClick={() => handleSocialSignUp(googleProvider)}
             >
-              Sign In with Google
-            </Button>
-            <Button
+              Sign Up with Google
+            </StyledButton>
+            <StyledButton
               fullWidth
               variant="contained"
-              sx={{ mt: 1, mb: 1, backgroundColor: '#000000', color: '#ffffff' }}
+              sx={{ mt: 1, mb: 1 }}
               startIcon={<FacebookIcon sx={{ color: '#4267B2' }} />} 
-              onClick={handleFacebookSignIn}
+              onClick={() => handleSocialSignUp(facebookProvider)}
             >
-              Sign In with Facebook
-            </Button>
-            <Typography variant="body2" sx={{ mt: 2 }}>
-              Don&apos;t have an account?{' '}
-              <Link href="/" variant="body2">
-                Sign Up here
+              Sign Up with Facebook
+            </StyledButton>
+            <Typography variant="body2" sx={{ mt: 2 }} onclick={onSwitch}>
+              Already registered?{' '}
+              <Link href="" variant="body2">
+                Login here
               </Link>
             </Typography>
           </Box>
@@ -184,4 +200,4 @@ const SignIn = () => {
   );
 };
 
-export default SignIn;
+export default SignUpForm;
