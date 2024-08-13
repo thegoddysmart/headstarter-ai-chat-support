@@ -52,7 +52,7 @@ const SignInForm = () => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push('/home');
+      router.push('/chat');
     } catch (err) {
       setError('Invalid email or password');
     }
@@ -61,7 +61,7 @@ const SignInForm = () => {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-      router.push('/home');
+      router.push('/chat');
     } catch (err) {
       setError('Failed to sign in with Google. Please try again.');
     }
@@ -70,7 +70,7 @@ const SignInForm = () => {
   const handleFacebookSignIn = async () => {
     try {
       await signInWithPopup(auth, facebookProvider);
-      router.push('/home');
+      router.push('/chat');
     } catch (err) {
       setError('Failed to sign in with Facebook. Please try again.');
     }

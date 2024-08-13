@@ -1,14 +1,12 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Avatar, InputBase, IconButton, Stack, Box, Button, Typography, Grid, Paper, Menu, MenuItem } from '@mui/material';
-import { styled } from '@mui/system';
+import { Avatar, InputBase, IconButton, Stack, Box, Button, Typography, Paper, Menu, MenuItem } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 
 function stringToColor(string) {
   let hash = 0;
   let i;
 
-  /* eslint-disable no-bitwise */
   for (i = 0; i < string.length; i += 1) {
     hash = string.charCodeAt(i) + ((hash << 5) - hash);
   }
@@ -19,7 +17,6 @@ function stringToColor(string) {
     const value = (hash >> (i * 8)) & 0xff;
     color += `00${value.toString(16)}`.slice(-2);
   }
-  /* eslint-enable no-bitwise */
 
   return color;
 }
@@ -49,20 +46,20 @@ export default function ChatPage() {
       role: 'assistant',
       content: "Hi! I'm the Headstarter support assistant. How can I help you today?",
     },
-  ])
-  const [message, setMessage] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  ]);
+  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const sendMessage = async () => {
-    if (!message.trim() || isLoading) return;  // Don't send empty messages
-    setIsLoading(true)
+    if (!message.trim() || isLoading) return;
+    setIsLoading(true);
 
-    setMessage('')
+    setMessage('');
     setMessages((messages) => [
       ...messages,
       { role: 'user', content: message },
       { role: 'assistant', content: '' },
-    ])
+    ]);
 
     try {
       const response = await fetch('/api/chat', {
@@ -71,75 +68,80 @@ export default function ChatPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify([...messages, { role: 'user', content: message }]),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error('Network response was not ok')
+        throw new Error('Network response was not ok');
       }
 
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
 
       while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        const text = decoder.decode(value, { stream: true })
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const text = decoder.decode(value, { stream: true });
+        
+        // Add line breaks for readability
+        const formattedText = text.replace(/\. /g, '.\n\n');
+        
         setMessages((messages) => {
-          let lastMessage = messages[messages.length - 1]
-          let otherMessages = messages.slice(0, messages.length - 1)
+          let lastMessage = messages[messages.length - 1];
+          let otherMessages = messages.slice(0, messages.length - 1);
           return [
             ...otherMessages,
-            { ...lastMessage, content: lastMessage.content + text },
-          ]
-        })
+            { ...lastMessage, content: lastMessage.content + formattedText },
+          ];
+        });
       }
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error:', error);
       setMessages((messages) => [
         ...messages,
         { role: 'assistant', content: "I'm sorry, but I encountered an error. Please try again later." },
-      ])
+      ]);
     }
-    setIsLoading(false)
-  }
+    setIsLoading(false);
+  };
 	
   const handleKeyPress = (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault()
-      sendMessage()
+      event.preventDefault();
+      sendMessage();
     }
-  }
+  };
   
-  const messagesEndRef = useRef(null)
+  const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
   return (
     <>
       <Box
-	width="100vw"
-	height="100vh"
-	sx={{
-	  display: 'flex',
-	  flexDirection: 'column'
-	}}
+        width="100vw"
+        height="100vh"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         <Box
-	  width="100vw"
-	  height="60px"
-	  sx={{
-	    display: 'flex',
-	    alignItems: 'center',
-	    p: 1.5
-	  }}
+          width="100vw"
+          height="60px"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            p: 1.5,
+          }}
         >
-	  <img
+          <img
             src="/images/chat_support.png" // replace with the path to your PNG image
             alt="Customer Support Logo"
             style={{
@@ -148,23 +150,20 @@ export default function ChatPage() {
               objectFit: 'cover', // Optional: scales the image to cover the Box
             }}
           />
-	   <Typography variant="h6" color="black">
+          <Typography variant="h6" color="black">
             Support Agent 
           </Typography>
-	  <Box sx={{
-	      cursor: 'pointer',
-	      marginLeft: 'auto'
-	    }}
-	  >
-	    <Avatar
-	      id="avatar"
+          <Box sx={{ cursor: 'pointer', marginLeft: 'auto' }}>
+            <Avatar
+              id="avatar"
               aria-controls={open ? 'basic-menu' : undefined}
               aria-haspopup="true"
               aria-expanded={open ? 'true' : undefined}
               onClick={handleClick}
-	      {...stringAvatar('Paa Kojo')} />
-	  </Box>
-	  <Menu
+              {...stringAvatar('Paa Kojo')}
+            />
+          </Box>
+          <Menu
             id="basic-menu"
             anchorEl={anchorEl}
             open={open}
@@ -177,26 +176,26 @@ export default function ChatPage() {
             <MenuItem onClick={handleClose}>My account</MenuItem>
             <MenuItem onClick={handleClose}>Logout</MenuItem>
           </Menu>
-	</Box>
-	<Box
-	  width="100%"
-	  height="calc(100vh - 60px)"
-	  sx={{
-	    display: 'flex',
-	    justifyContent: 'center',
-	    marginLeft: 'auto',
-	    marginRight: 'auto'
-	  }}
-	>
+        </Box>
+        <Box
+          width="100%"
+          height="calc(100vh - 60px)"
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+          }}
+        >
           <Box
-	    sx={{
-	      width: 712,
-	      height: 'inherit',
-	      display: 'flex',
-	      flexDirection: 'column'
-	    }}
-	  >
-	    <Stack
+            sx={{
+              width: 712,
+              height: 'inherit',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Stack
               direction={'column'}
               width="inherit"
               height="inherit"
@@ -226,34 +225,35 @@ export default function ChatPage() {
                       }
                       borderRadius={16}
                       p={2}
+                      whiteSpace="pre-wrap" // Preserve line breaks and formatting
                     >
                       {message.content}
                     </Box>
                   </Box>
                 ))}
-	        <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} />
               </Stack>
             </Stack>
-	    <Paper
+            <Paper
               component="form"
-	      fullwidth
+              fullwidth
               sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', mt: 'auto', mb: 2.5 }}
             >
               <InputBase
                 sx={{ ml: 1, flex: 1 }}
                 placeholder="Type here to chat with me"
                 inputProps={{ 'aria-label': 'chat with AI agent' }}
-	        value={message}
+                value={message}
                 onChange={(e) => setMessage(e.target.value)}
-	        onKeyPress={handleKeyPress}
+                onKeyPress={handleKeyPress}
                 disabled={isLoading}
               />
               <IconButton color="primary" sx={{ p: '10px' }} aria-label="send" onClick={sendMessage} disabled={isLoading}>
                 <SendIcon />
               </IconButton>
             </Paper>
-	  </Box>
-	</Box>
+          </Box>
+        </Box>
       </Box>
     </>
   );
